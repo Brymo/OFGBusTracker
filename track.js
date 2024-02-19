@@ -2,12 +2,15 @@
 const key =
   "";
 
+const ofgID = "10115610";
+const cbdID = "10111010";
+
 // ping TransportNSW with a request to get busData
 async function getBusData() {
   const date = getDate();
   const time = getTime();
 
-  const requestURL = `https://api.transport.nsw.gov.au/v1/tp/departure_mon?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&mode=direct&type_dm=stop&name_dm=10115610&itdDate=${date}&itdTime=${time}&departureMonitorMacro=true&TfNSWDM=true&version=`;
+  const requestURL = `https://api.transport.nsw.gov.au/v1/tp/departure_mon?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&mode=direct&type_dm=stop&name_dm=${cbdID}&itdDate=${date}&itdTime=${time}&departureMonitorMacro=true&TfNSWDM=true&version=`;
   const busData = await fetch(requestURL, {
     method: "GET",
     accept: "application/json",
