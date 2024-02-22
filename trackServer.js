@@ -1,10 +1,15 @@
 const express = require('express')
 const app = express();
-const port = 3000
+const port = 3000;
+const ofgIDa = "2100156";
+const ofgIDb = "10115610";
+const cbdID = "10111010";
 
 app.get('/', (req, res) => {
   console.log("request from " + req.url);
-  getBusData().then(response => res.send(response))
+  const resultA = getBusData(ofgIDa);
+  const resultB = getBusData(ofgIDb);
+  Promise.all([resultA,resultB]).then(results => res.send(results.flat()));
 })
 
 app.listen(port, () => {
@@ -13,14 +18,11 @@ app.listen(port, () => {
 
 const key = "";
 
-const ofgID = "10115610";
-const cbdID = "10111010";
 const numResults = 3;
 
-const usedID = cbdID;
 
 // ping TransportNSW with a request to get busData
-async function getBusData() {
+async function getBusData(usedID) {
   const date = getDate();
   const time = getTime();
   const requestURL = `https://api.transport.nsw.gov.au/v1/tp/departure_mon?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&mode=direct&type_dm=stop&name_dm=${usedID}&itdDate=${date}&itdTime=${time}&departureMonitorMacro=true&TfNSWDM=true&version=`;
