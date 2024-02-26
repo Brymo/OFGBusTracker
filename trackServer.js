@@ -1,25 +1,31 @@
-const express = require('express')
+const express = require("express");
+const cors = require("cors");
 const app = express();
+app.use(cors());
+
 const port = 3000;
 const ofgIDa = "2100156";
 const ofgIDb = "10115610";
 const cbdID = "10111010";
 
-app.get('/', (req, res) => {
+const usedIDs = [cbdID];
+
+app.get("/", cors() ,(req, res) => {
   console.log("request from " + req.url);
-  const resultA = getBusData(ofgIDa);
-  const resultB = getBusData(ofgIDb);
-  Promise.all([resultA,resultB]).then(results => res.send(results.flat()));
-})
+  const results = usedIDs.map((usedID) => getBusData(usedID));
+  Promise.all(results).then((results) => {
+    res.send(results.flat());
+  });
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
 
-const key = "";
+const key =
+  "";
 
 const numResults = 3;
-
 
 // ping TransportNSW with a request to get busData
 async function getBusData(usedID) {

@@ -1,3 +1,21 @@
-.test{
-    color: red;
+body{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    
+}
+
+.busDetails{
+    padding : 2em;
+    height: 30vh;
+    display: flex;
+    width: 100%;
+    margin: 1.5vh 0;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid black;
+}
+
+*{
+    box-sizing: border-box;
 }
