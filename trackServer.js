@@ -42,6 +42,8 @@ async function getBusData(usedID) {
     },
   }).then((response) => response.json());
 
+  console.log(busData);
+
   const trimmedBusData = busData.stopEvents
     .filter(
       (stopEvent, index) => stopEvent.isRealtimeControlled && index < numResults
@@ -54,10 +56,9 @@ async function getBusData(usedID) {
         transportation,
       } = stopEvent;
       return {
-        departureTimePlanned: isoToSydney(departureTimePlanned),
-        departureTimeBaseTimetable: isoToSydney(departureTimeBaseTimetable),
-        departureTimeEstimated:
-          departureTimeEstimated && isoToSydney(departureTimeEstimated),
+        departureTimePlanned,
+        departureTimeBaseTimetable,
+        departureTimeEstimated,
         busName: transportation.disassembledName,
       };
     });
@@ -97,7 +98,7 @@ function getTime() {
   return twentyFourHourTime;
 }
 
-function isoToSydney(isoString) {
+/* function isoToSydney(isoString) {
   function parseISOString(s) {
     const b = s.split(/\D+/);
     return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]));
@@ -113,6 +114,6 @@ function isoToSydney(isoString) {
     .split(" ")[0];
 
   return formattedDate;
-}
+}*/
 
 //getBusData().then((data) => console.log(data));

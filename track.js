@@ -1,20 +1,27 @@
 setTimeout(run,1000);
 
 function run() {
-  console.log("ping");
   updateBoard();
+  updateTime();
   setInterval(updateBoard, 10 * 1000);
+  setInterval(updateTime, 1 * 1000);
+}
+
+function updateTime(){
+  const timeContainer = document.getElementById("time");
+  const currentTime = new Date().toLocaleString('en-US',{hour: 'numeric', minute: 'numeric', hour12: true});
+
+  timeContainer.innerText = `Time:  ${currentTime}`;
 }
 
 async function updateBoard() {
   const newBusResults = await pingBusServer();
-  console.log(newBusResults);
   wipeBoard();
 
-  const body = document.body;
+  const allDetails = document.getElementById("allBusDetails");
 
   newBusResults.forEach(busDetail => {
-    body.appendChild(createBusDetailRow(busDetail));
+    allDetails.appendChild(createBusDetailRow(busDetail));
   });
 }
 
@@ -35,7 +42,7 @@ function createBusDetailRow(busDetail){
   busNameContainer.innerText = busName;
   
   const busTimeContainer = document.createElement("div");
-  busTimeContainer.innerText = departureTimeEstimated;
+  busTimeContainer.innerText = timeUntilISO(departureTimeEstimated);
 
   container.appendChild(busNameContainer);
   container.appendChild(busTimeContainer);
@@ -43,7 +50,19 @@ function createBusDetailRow(busDetail){
   return container;
 }
 
+function timeUntilISO(ISO){
+  const now = Math.floor(new Date().getTime()/1000); //account for milliseconds
+  const time = Math.floor(new Date(ISO).getTime()/1000);
+  const secondDifference = time - now;
+
+  const hours = Math.floor(secondDifference / 3600);
+  const minutes = Math.floor(secondDifference/60) - hours*60;
+
+  return hours > 0 ? `${hours} hr ${minutes} mins` : `${minutes} mins`;
+
+}
+
 function wipeBoard(){
-  const body = document.body;
-  body.innerHTML = ""
+  const allDetails = document.getElementById("allBusDetails");
+  allDetails.innerHTML = ""
 }
