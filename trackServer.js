@@ -10,7 +10,7 @@ const cbdID = "10111010";
 
 const usedIDs = [cbdID];
 
-app.get("/", cors() ,(req, res) => {
+app.get("/", cors(), (req, res) => {
   console.log("request from " + req.url);
   const results = usedIDs.map((usedID) => getBusData(usedID));
   Promise.all(results).then((results) => {
@@ -23,7 +23,7 @@ app.listen(port, () => {
 });
 
 const key =
-  "";
+  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI4M3NERnl6WVZ4cnR0bDVOUWNUd0VCRzFtaGpuYm9hdmVPTTZ1N1duOEU4IiwiaWF0IjoxNzA5NTI0MTUyfQ.AJeLDcguwvZjs7VmmwG0cTKhPWI3HuOvlLA4fFTSnnw";
 
 const numResults = 3;
 
@@ -63,7 +63,9 @@ async function getBusData(usedID) {
       };
     });
 
-  return trimmedBusData;
+  return trimmedBusData.sort(function (a, b) {
+    return a.departureTimeEstimated < b.departureTimeEstimated ? -1 : a.departureTimeEstimated > b.departureTimeEstimated ? 1 : 0;
+  });
 }
 
 function getDate() {
