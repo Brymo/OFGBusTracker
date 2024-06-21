@@ -10,9 +10,9 @@ const cbdID = "10111010";
 
 const usedIDs = [cbdID];
 
-app.get("/", cors(), (req, res) => {
+app.get("/:page", cors(), (req, res) => {
   console.log("request from " + req.url);
-  const results = usedIDs.map((usedID) => getBusData(usedID));
+  const results = usedIDs.map((usedID) => getBusData(usedID, req.params.page));
   Promise.all(results).then((results) => {
     res.send(results.flat());
   });
@@ -28,7 +28,8 @@ const key =
 const numResults = 3;
 
 // ping TransportNSW with a request to get busData
-async function getBusData(usedID) {
+async function getBusData(usedID, page) {
+  console.log(page);
   const date = getDate();
   const time = getTime();
   const requestURL = `https://api.transport.nsw.gov.au/v1/tp/departure_mon?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&mode=direct&type_dm=stop&name_dm=${usedID}&itdDate=${date}&itdTime=${time}&departureMonitorMacro=true&TfNSWDM=true&version=`;
@@ -42,8 +43,6 @@ async function getBusData(usedID) {
     },
   }).then((response) => response.json());
 
-  console.log(busData);
-
   const trimmedBusData = busData.stopEvents
     .filter(
       (stopEvent, index) => stopEvent.isRealtimeControlled && index < numResults
@@ -55,6 +54,7 @@ async function getBusData(usedID) {
         departureTimeEstimated,
         transportation,
       } = stopEvent;
+
       return {
         departureTimePlanned,
         departureTimeBaseTimetable,
@@ -63,9 +63,65 @@ async function getBusData(usedID) {
       };
     });
 
-  return trimmedBusData.sort(function (a, b) {
-    return a.departureTimeEstimated < b.departureTimeEstimated ? -1 : a.departureTimeEstimated > b.departureTimeEstimated ? 1 : 0;
+  const sortedBusData = trimmedBusData.sort(function (a, b) {
+    return isFirstTimeEarlier(
+      a.departureTimeEstimated,
+      b.departureTimeEstimated
+    );
   });
+
+  const dataWithStatusAdded = sortedBusData.map((singleBusInfo) => {
+    const clone = { ...singleBusInfo };
+    clone.status = isBusEarly(singleBusInfo);
+    return clone;
+  });
+
+  const timeFormattedData = dataWithStatusAdded.map((singleBusInfo) =>
+    formatOnlyIsoTimes(singleBusInfo)
+  );
+
+  console.log(timeFormattedData);
+
+  return timeFormattedData;
+}
+
+function isBusEarly(busData) {
+  return isFirstTimeEarlier(
+    busData.departureTimeEstimated,
+    busData.departureTimePlanned
+  );
+}
+
+function isFirstTimeEarlier(first, second) {
+  let status = 0;
+  if (first > second) status = -1;
+  if (first < second) status = 1;
+  return status;
+}
+
+function formatOnlyIsoTimes(busData) {
+  function timeUntilISO(ISO) {
+    const now = Math.floor(new Date().getTime() / 1000); //account for milliseconds
+    const time = Math.floor(new Date(ISO).getTime() / 1000);
+    const secondDifference = time - now;
+
+    const hours = Math.floor(secondDifference / 3600);
+    const minutes = Math.floor(secondDifference / 60) - hours * 60;
+
+    const timeUntilDeparture = hours > 0 ? `${hours} hr ${minutes} mins` : `${minutes} mins`;
+
+    return timeUntilDeparture == "O mins" ? "Now" : timeUntilDeparture;
+  }
+
+  const formattedData = Object.keys(busData).reduce((acc, key) => {
+    const clone = { ...acc };
+    clone[key] = isISOTime(busData[key])
+      ? timeUntilISO(busData[key])
+      : busData[key];
+    return clone;
+  }, {});
+
+  return formattedData;
 }
 
 function getDate() {
@@ -98,6 +154,13 @@ function getTime() {
   const twentyFourHourTime = dateElements[0].concat(dateElements[1]);
 
   return twentyFourHourTime;
+}
+
+function isISOTime(value) {
+  return (
+    typeof value == "string" &&
+    value.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/g)
+  );
 }
 
 /* function isoToSydney(isoString) {

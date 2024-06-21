@@ -48,6 +48,25 @@ body {
   border-bottom: 1px solid black;
 }
 
+.busContainer{
+  display: flex;
+  justify-content: space-between;
+}
+
+.statusDotContainer{
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+}
+
+.statusDot{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%; 
+}
+
+
 * {
   box-sizing: border-box;
 }
