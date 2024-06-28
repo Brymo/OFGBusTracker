@@ -67,7 +67,7 @@ async function getBusData(usedID, page) {
     return isFirstTimeEarlier(
       a.departureTimeEstimated,
       b.departureTimeEstimated
-    );
+    ) * -1;
   });
 
   const dataWithStatusAdded = sortedBusData.map((singleBusInfo) => {
