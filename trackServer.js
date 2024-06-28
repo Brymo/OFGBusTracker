@@ -8,7 +8,7 @@ const ofgIDa = "2100156";
 const ofgIDb = "10115610";
 const cbdID = "10111010";
 
-const usedIDs = [cbdID];
+const usedIDs = [ofgIDb];
 
 app.get("/:page", cors(), (req, res) => {
   console.log("request from " + req.url);
@@ -43,7 +43,9 @@ async function getBusData(usedID, page) {
     },
   }).then((response) => response.json());
 
-  const trimmedBusData = busData.stopEvents
+  console.log(busData);
+  const stopEvents = busData.stopEvents || [];
+  const trimmedBusData = stopEvents
     .filter(
       (stopEvent, index) => stopEvent.isRealtimeControlled && index < numResults
     )
