@@ -3,16 +3,26 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
+const resultsPerPage = 3;
+const numPages = 3;
+
 const port = 3000;
 const ofgIDa = "2100156";
 const ofgIDb = "10115610";
 const cbdID = "10111010";
 
-const usedIDs = [cbdID];
+let lastResults = null;
+const passedBusses = makeBusQueue();
+
+const usedIDs = [ofgIDa,ofgIDb];
 
 app.get("/:page", cors(), (req, res) => {
   console.log("request from " + req.url);
-  const results = usedIDs.map((usedID) => getBusData(usedID, req.params.page));
+  const page = req.params.page;
+  const results =
+    page == 3
+      ? passedBusses.queue
+      : usedIDs.map((usedID) => getBusData(usedID, page));
   Promise.all(results).then((results) => {
     res.send(results.flat());
   });
@@ -25,11 +35,8 @@ app.listen(port, () => {
 const key =
   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI4M3NERnl6WVZ4cnR0bDVOUWNUd0VCRzFtaGpuYm9hdmVPTTZ1N1duOEU4IiwiaWF0IjoxNzA5NTI0MTUyfQ.AJeLDcguwvZjs7VmmwG0cTKhPWI3HuOvlLA4fFTSnnw";
 
-const numResults = 3;
-
 // ping TransportNSW with a request to get busData
 async function getBusData(usedID, page) {
-  console.log(page);
   const date = getDate();
   const time = getTime();
   const requestURL = `https://api.transport.nsw.gov.au/v1/tp/departure_mon?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&mode=direct&type_dm=stop&name_dm=${usedID}&itdDate=${date}&itdTime=${time}&departureMonitorMacro=true&TfNSWDM=true&version=`;
@@ -43,9 +50,11 @@ async function getBusData(usedID, page) {
     },
   }).then((response) => response.json());
 
+  console.log(busData);
   const trimmedBusData = busData.stopEvents
     .filter(
-      (stopEvent, index) => stopEvent.isRealtimeControlled && index < numResults
+      (stopEvent, index) =>
+        stopEvent.isRealtimeControlled && index < resultsPerPage * numPages
     )
     .map((stopEvent) => {
       const {
@@ -53,6 +62,7 @@ async function getBusData(usedID, page) {
         departureTimePlanned,
         departureTimeEstimated,
         transportation,
+        properties,
       } = stopEvent;
 
       return {
@@ -60,11 +70,14 @@ async function getBusData(usedID, page) {
         departureTimeBaseTimetable,
         departureTimeEstimated,
         busName: transportation.disassembledName,
+        id: properties.RealtimeTripId,
       };
     });
 
+  console.log(trimmedBusData);
+
   const sortedBusData = trimmedBusData.sort(function (a, b) {
-    return isFirstTimeEarlier(
+    return !isFirstTimeEarlier(
       a.departureTimeEstimated,
       b.departureTimeEstimated
     );
@@ -76,13 +89,28 @@ async function getBusData(usedID, page) {
     return clone;
   });
 
+  console.log(dataWithStatusAdded);
   const timeFormattedData = dataWithStatusAdded.map((singleBusInfo) =>
     formatOnlyIsoTimes(singleBusInfo)
   );
 
-  console.log(timeFormattedData);
+  if (lastResults != null) {
+    passedBusses.add(diff(lastResults, timeFormattedData));
+  }
+  lastResults = timeFormattedData;
 
-  return timeFormattedData;
+  console.log(passedBusses);
+
+  const startPage = page * resultsPerPage;
+  const endPage = startPage + resultsPerPage;
+  const dataTrimmedToPage =
+    page == 3
+      ? passedBusses.queue
+      : timeFormattedData.slice(startPage, endPage);
+
+  console.log(dataTrimmedToPage);
+
+  return dataTrimmedToPage;
 }
 
 function isBusEarly(busData) {
@@ -100,17 +128,20 @@ function isFirstTimeEarlier(first, second) {
 }
 
 function formatOnlyIsoTimes(busData) {
+
   function timeUntilISO(ISO) {
     const now = Math.floor(new Date().getTime() / 1000); //account for milliseconds
     const time = Math.floor(new Date(ISO).getTime() / 1000);
     const secondDifference = time - now;
-
+    console.log({secondDifference})
     const hours = Math.floor(secondDifference / 3600);
     const minutes = Math.floor(secondDifference / 60) - hours * 60;
 
-    const timeUntilDeparture = hours > 0 ? `${hours} hr ${minutes} mins` : `${minutes} mins`;
+    const timeUntilDeparture =
+      hours > 0 ? `${hours} hr ${minutes} mins` : `${minutes} mins`;
 
-    return timeUntilDeparture == "O mins" ? "Now" : timeUntilDeparture;
+    if (secondDifference < 0) return "Departed";
+    return timeUntilDeparture == "0 mins" ? "Now" : timeUntilDeparture;
   }
 
   const formattedData = Object.keys(busData).reduce((acc, key) => {
@@ -182,3 +213,35 @@ function isISOTime(value) {
 }*/
 
 //getBusData().then((data) => console.log(data));
+
+function makeBusQueue(queue = [], size = 3) {
+  return {
+    queue,
+    size,
+    add: function add(value) {
+      const pushOntoQueue = (v) => {
+        this.queue = [v, ...this.queue];
+        if (this.queue.length > this.size) {
+          this.queue.pop();
+        }
+      };
+
+      if (Array.isArray(value)) {
+        value.forEach((v) => {
+          pushOntoQueue(v);
+        });
+      } else {
+        pushOntoQueue(value);
+      }
+    },
+    print: function print() {
+      console.log(this.queue);
+    },
+  };
+}
+
+function diff(oldList, newList) {
+  return newList.reduce((acc, newBus) => {
+    return acc.filter((oldBus) => oldBus.id != newBus.id);
+  }, oldList);
+}
