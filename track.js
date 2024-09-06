@@ -38,7 +38,7 @@ async function pingBusServer() {
 }
 
 function createBusDetailRow(busDetail){
-  const {busName, departureTimeEstimated} = busDetail;
+  const {busName, departureTimeEstimated, departureTimePlanned} = busDetail;
 
   const container = document.createElement("div");
   container.className = "busDetails";
@@ -50,7 +50,7 @@ function createBusDetailRow(busDetail){
   busStatusDotContainer.className = "statusDotContainer";
   const busStatusDot = document.createElement("div");
   busStatusDot.className = "statusDot";
-  busStatusDot.style.backgroundColor = busDetail.status == -1 ? "red" : "green";
+  busStatusDot.style.backgroundColor = busDetail.status == -1 ? "red" : busDetail.status == 1 ? "green" : "grey";
   busStatusDotContainer.appendChild(busStatusDot);
 
   
@@ -60,7 +60,7 @@ function createBusDetailRow(busDetail){
   busContainer.appendChild(busStatusDotContainer);
 
   const busTimeContainer = document.createElement("div");
-  busTimeContainer.innerText = departureTimeEstimated;
+  busTimeContainer.innerText = departureTimeEstimated || departureTimePlanned;
 
   container.appendChild(busContainer);
   container.appendChild(busTimeContainer);

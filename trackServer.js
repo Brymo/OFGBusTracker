@@ -11,14 +11,10 @@ const ofgIDa = "2100156";
 const ofgIDb = "10115610";
 const cbdID = "10111010";
 
-<<<<<<< HEAD
 let lastResults = null;
 const passedBusses = makeBusQueue();
 
-const usedIDs = [ofgIDa,ofgIDb];
-=======
-const usedIDs = [ofgIDb];
->>>>>>> 6e5f00355e5aa3dfb7e74178bf977766f7996600
+const usedIDs = [cbdID];
 
 app.get("/:page", cors(), (req, res) => {
   console.log("request from " + req.url);
@@ -54,16 +50,11 @@ async function getBusData(usedID, page) {
     },
   }).then((response) => response.json());
 
-  console.log(busData);
-<<<<<<< HEAD
   const trimmedBusData = busData.stopEvents
-=======
-  const stopEvents = busData.stopEvents || [];
-  const trimmedBusData = stopEvents
->>>>>>> 6e5f00355e5aa3dfb7e74178bf977766f7996600
     .filter(
       (stopEvent, index) =>
-        stopEvent.isRealtimeControlled && index < resultsPerPage * numPages
+        //stopEvent.isRealtimeControlled && index < resultsPerPage * numPages
+        index < resultsPerPage * numPages
     )
     .map((stopEvent) => {
       const {
@@ -83,13 +74,13 @@ async function getBusData(usedID, page) {
       };
     });
 
-  console.log(trimmedBusData);
+  const util = require("util");
+  console.log(util.inspect(busData, false, null, true));
 
   const sortedBusData = trimmedBusData.sort(function (a, b) {
-    return !isFirstTimeEarlier(
-      a.departureTimeEstimated,
-      b.departureTimeEstimated
-    ) * -1;
+    const timeA = a.departureTimeEstimated || a.departureTimePlanned;
+    const timeB = b.departureTimeEstimated || b.departureTimePlanned;
+    return !isFirstTimeEarlier(timeA, timeB) * -1;
   });
 
   const dataWithStatusAdded = sortedBusData.map((singleBusInfo) => {
@@ -98,7 +89,6 @@ async function getBusData(usedID, page) {
     return clone;
   });
 
-  console.log(dataWithStatusAdded);
   const timeFormattedData = dataWithStatusAdded.map((singleBusInfo) =>
     formatOnlyIsoTimes(singleBusInfo)
   );
@@ -107,8 +97,6 @@ async function getBusData(usedID, page) {
     passedBusses.add(diff(lastResults, timeFormattedData));
   }
   lastResults = timeFormattedData;
-
-  console.log(passedBusses);
 
   const startPage = page * resultsPerPage;
   const endPage = startPage + resultsPerPage;
@@ -123,6 +111,7 @@ async function getBusData(usedID, page) {
 }
 
 function isBusEarly(busData) {
+  if (!busData.departureTimeEstimated || !busData.departureTimePlanned) return 0;
   return isFirstTimeEarlier(
     busData.departureTimeEstimated,
     busData.departureTimePlanned
@@ -137,12 +126,10 @@ function isFirstTimeEarlier(first, second) {
 }
 
 function formatOnlyIsoTimes(busData) {
-
   function timeUntilISO(ISO) {
     const now = Math.floor(new Date().getTime() / 1000); //account for milliseconds
     const time = Math.floor(new Date(ISO).getTime() / 1000);
     const secondDifference = time - now;
-    console.log({secondDifference})
     const hours = Math.floor(secondDifference / 3600);
     const minutes = Math.floor(secondDifference / 60) - hours * 60;
 
