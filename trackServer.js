@@ -11,10 +11,14 @@ const ofgIDa = "2100156";
 const ofgIDb = "10115610";
 const cbdID = "10111010";
 
+<<<<<<< HEAD
 let lastResults = null;
 const passedBusses = makeBusQueue();
 
 const usedIDs = [ofgIDa,ofgIDb];
+=======
+const usedIDs = [ofgIDb];
+>>>>>>> 6e5f00355e5aa3dfb7e74178bf977766f7996600
 
 app.get("/:page", cors(), (req, res) => {
   console.log("request from " + req.url);
@@ -51,7 +55,12 @@ async function getBusData(usedID, page) {
   }).then((response) => response.json());
 
   console.log(busData);
+<<<<<<< HEAD
   const trimmedBusData = busData.stopEvents
+=======
+  const stopEvents = busData.stopEvents || [];
+  const trimmedBusData = stopEvents
+>>>>>>> 6e5f00355e5aa3dfb7e74178bf977766f7996600
     .filter(
       (stopEvent, index) =>
         stopEvent.isRealtimeControlled && index < resultsPerPage * numPages
@@ -80,7 +89,7 @@ async function getBusData(usedID, page) {
     return !isFirstTimeEarlier(
       a.departureTimeEstimated,
       b.departureTimeEstimated
-    );
+    ) * -1;
   });
 
   const dataWithStatusAdded = sortedBusData.map((singleBusInfo) => {
