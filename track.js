@@ -1,4 +1,4 @@
-setTimeout(run,1000);
+setTimeout(run, 1000);
 
 function run() {
   updateBoard();
@@ -7,9 +7,13 @@ function run() {
   setInterval(updateTime, 1 * 1000);
 }
 
-function updateTime(){
+function updateTime() {
   const timeContainer = document.getElementById("time");
-  const currentTime = new Date().toLocaleString('en-US',{hour: 'numeric', minute: 'numeric', hour12: true});
+  const currentTime = new Date().toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
 
   timeContainer.innerText = `Time:  ${currentTime}`;
 }
@@ -20,13 +24,12 @@ async function updateBoard() {
 
   const allDetails = document.getElementById("allBusDetails");
 
-  newBusResults.forEach(busDetail => {
+  newBusResults.forEach((busDetail) => {
     allDetails.appendChild(createBusDetailRow(busDetail));
   });
 }
 
 async function pingBusServer() {
-
   const urlParams = new URLSearchParams(window.location.search);
   const page = urlParams.get("page") || 0;
 
@@ -34,11 +37,11 @@ async function pingBusServer() {
     method: "GET",
     accept: "application/json",
     mode: "cors",
-    }).then(response => response.json());
+  }).then((response) => response.json());
 }
 
-function createBusDetailRow(busDetail){
-  const {busName, departureTimeEstimated, departureTimePlanned} = busDetail;
+function createBusDetailRow(busDetail) {
+  const { busName, departureTimeEstimated, departureTimePlanned } = busDetail;
 
   const container = document.createElement("div");
   container.className = "busDetails";
@@ -50,10 +53,10 @@ function createBusDetailRow(busDetail){
   busStatusDotContainer.className = "statusDotContainer";
   const busStatusDot = document.createElement("div");
   busStatusDot.className = "statusDot";
-  busStatusDot.style.backgroundColor = busDetail.status == -1 ? "red" : busDetail.status == 1 ? "green" : "grey";
+  busStatusDot.style.backgroundColor =
+    busDetail.status == -1 ? "red" : busDetail.status == 1 ? "green" : "grey";
   busStatusDotContainer.appendChild(busStatusDot);
 
-  
   const busContainer = document.createElement("div");
   busContainer.className = "busContainer";
   busContainer.appendChild(busNameContainer);
@@ -68,8 +71,7 @@ function createBusDetailRow(busDetail){
   return container;
 }
 
-
-function wipeBoard(){
+function wipeBoard() {
   const allDetails = document.getElementById("allBusDetails");
-  allDetails.innerHTML = ""
+  allDetails.innerHTML = "";
 }

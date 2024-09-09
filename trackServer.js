@@ -14,15 +14,12 @@ const cbdID = "10111010";
 let lastResults = null;
 const passedBusses = makeBusQueue();
 
-const usedIDs = [cbdID];
+const usedIDs = [ofgIDb];
 
 app.get("/:page", cors(), (req, res) => {
   console.log("request from " + req.url);
   const page = req.params.page;
-  const results =
-    page == 3
-      ? passedBusses.queue
-      : usedIDs.map((usedID) => getBusData(usedID, page));
+  const results = usedIDs.map((usedID) => getBusData(usedID, page));
   Promise.all(results).then((results) => {
     res.send(results.flat());
   });
@@ -50,6 +47,8 @@ async function getBusData(usedID, page) {
     },
   }).then((response) => response.json());
 
+  console.log(JSON.stringify(busData));
+
   const trimmedBusData = busData.stopEvents
     .filter(
       (stopEvent, index) =>
@@ -74,8 +73,6 @@ async function getBusData(usedID, page) {
       };
     });
 
-  const util = require("util");
-  console.log(util.inspect(busData, false, null, true));
 
   const sortedBusData = trimmedBusData.sort(function (a, b) {
     const timeA = a.departureTimeEstimated || a.departureTimePlanned;
@@ -94,12 +91,14 @@ async function getBusData(usedID, page) {
   );
 
   if (lastResults != null) {
-    passedBusses.add(diff(lastResults, timeFormattedData));
+    const difference = diff(lastResults, timeFormattedData);
+    difference.length > 0 && passedBusses.add(difference);
   }
   lastResults = timeFormattedData;
 
   const startPage = page * resultsPerPage;
   const endPage = startPage + resultsPerPage;
+  console.log(startPage,endPage);
   const dataTrimmedToPage =
     page == 3
       ? passedBusses.queue
@@ -129,15 +128,15 @@ function formatOnlyIsoTimes(busData) {
   function timeUntilISO(ISO) {
     const now = Math.floor(new Date().getTime() / 1000); //account for milliseconds
     const time = Math.floor(new Date(ISO).getTime() / 1000);
-    const secondDifference = time - now;
+    const secondDifference = time - (now + 5*60);
     const hours = Math.floor(secondDifference / 3600);
-    const minutes = Math.floor(secondDifference / 60) - hours * 60;
+    const minutes = (Math.floor(secondDifference / 60) - hours * 60);
 
     const timeUntilDeparture =
       hours > 0 ? `${hours} hr ${minutes} mins` : `${minutes} mins`;
 
     if (secondDifference < 0) return "Departed";
-    return timeUntilDeparture == "0 mins" ? "Now" : timeUntilDeparture;
+    return timeUntilDeparture == "0 mins" ? "Leaving Now" : `Leaving in ${timeUntilDeparture}`;
   }
 
   const formattedData = Object.keys(busData).reduce((acc, key) => {
@@ -215,6 +214,7 @@ function makeBusQueue(queue = [], size = 3) {
     queue,
     size,
     add: function add(value) {
+      console.log("Adding ", value, " to queue");
       const pushOntoQueue = (v) => {
         this.queue = [v, ...this.queue];
         if (this.queue.length > this.size) {
