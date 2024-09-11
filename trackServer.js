@@ -110,7 +110,7 @@ async function getBusData(usedID, page) {
 }
 
 function isBusEarly(busData) {
-  if (!busData.departureTimeEstimated || !busData.departureTimePlanned) return 0;
+  if (!busData.departureTimeEstimated || !busData.departureTimePlanned) return null;
   return isFirstTimeEarlier(
     busData.departureTimeEstimated,
     busData.departureTimePlanned
@@ -128,7 +128,7 @@ function formatOnlyIsoTimes(busData) {
   function timeUntilISO(ISO) {
     const now = Math.floor(new Date().getTime() / 1000); //account for milliseconds
     const time = Math.floor(new Date(ISO).getTime() / 1000);
-    const secondDifference = time - (now + 5*60);
+    const secondDifference = time - now;
     const hours = Math.floor(secondDifference / 3600);
     const minutes = (Math.floor(secondDifference / 60) - hours * 60);
 

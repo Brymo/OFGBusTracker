@@ -53,8 +53,20 @@ function createBusDetailRow(busDetail) {
   busStatusDotContainer.className = "statusDotContainer";
   const busStatusDot = document.createElement("div");
   busStatusDot.className = "statusDot";
-  busStatusDot.style.backgroundColor =
-    busDetail.status == -1 ? "red" : busDetail.status == 1 ? "green" : "grey";
+  switch(busDetail.status){
+    case -1:
+   busStatusDot.style.backgroundColor = "red";   
+      break;
+    case 1:
+   busStatusDot.style.backgroundColor = "green";   
+      break;
+    case 0:
+   busStatusDot.style.backgroundColor = "grey";   
+      break;
+    case null:
+   busStatusDot.style.backgroundColor = "white";   
+      break;
+  }
   busStatusDotContainer.appendChild(busStatusDot);
 
   const busContainer = document.createElement("div");
